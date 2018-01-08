@@ -157,11 +157,9 @@ def dict_to_tf_example(data,
     classes.append(label_map_dict[class_name])
     truncated.append(int(obj['truncated']))
     poses.append(obj['pose'].encode('utf8'))
-    #if not faces_only:
-    #  mask_remapped = mask_np != 2
-    #  masks.append(mask_remapped)
-    #mask_stack = np.stack(masks).astype(np.float32)
-    #masks_flattened = np.reshape(mask_stack, [-1])
+    if not faces_only:
+      mask_remapped = mask_np != 2
+      masks.append(mask_remapped)
 
   feature_dict = {
       'image/height': dataset_util.int64_feature(height),
@@ -183,9 +181,12 @@ def dict_to_tf_example(data,
       'image/object/truncated': dataset_util.int64_list_feature(truncated),
       'image/object/view': dataset_util.bytes_list_feature(poses),
   }
-  #if not faces_only:
-  #  feature_dict['image/object/mask'] = (
-  #      dataset_util.float_list_feature(masks_flattened.tolist()))
+  if not faces_only:
+    mask_stack = np.stack(masks).astype(np.float32)
+    masks_flattened = np.reshape(mask_stack, [-1])
+    feature_dict['image/object/mask'] = (
+        dataset_util.float_list_feature(masks_flattened.tolist()))
+
   example = tf.train.Example(features=tf.train.Features(feature=feature_dict))
   return example
 
