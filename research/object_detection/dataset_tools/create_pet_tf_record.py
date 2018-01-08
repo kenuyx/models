@@ -63,7 +63,7 @@ def get_class_name_from_filename(file_name):
   Returns:
     A string of the class name.
   """
-  match = re.match(r'([A-Za-z_]+)(_[0-9]+\.jpg)', file_name, re.I)
+  match = re.match(r'([A-Za-z0-9_]+)(_[0-9]+\.jpg)', file_name, re.I)
   return match.groups()[0]
 
 
@@ -105,18 +105,18 @@ def dict_to_tf_example(data,
     raise ValueError('Image format not JPEG')
   key = hashlib.sha256(encoded_jpg).hexdigest()
 
-  with tf.gfile.GFile(mask_path, 'rb') as fid:
-    encoded_mask_png = fid.read()
-  encoded_png_io = io.BytesIO(encoded_mask_png)
-  mask = PIL.Image.open(encoded_png_io)
-  if mask.format != 'PNG':
-    raise ValueError('Mask format not PNG')
-
-  mask_np = np.asarray(mask)
-  nonbackground_indices_x = np.any(mask_np != 2, axis=0)
-  nonbackground_indices_y = np.any(mask_np != 2, axis=1)
-  nonzero_x_indices = np.where(nonbackground_indices_x)
-  nonzero_y_indices = np.where(nonbackground_indices_y)
+  #with tf.gfile.GFile(mask_path, 'rb') as fid:
+  #  encoded_mask_png = fid.read()
+  #encoded_png_io = io.BytesIO(encoded_mask_png)
+  #mask = PIL.Image.open(encoded_png_io)
+  #if mask.format != 'PNG':
+  #  raise ValueError('Mask format not PNG')
+  #
+  #mask_np = np.asarray(mask)
+  #nonbackground_indices_x = np.any(mask_np != 2, axis=0)
+  #nonbackground_indices_y = np.any(mask_np != 2, axis=1)
+  #nonzero_x_indices = np.where(nonbackground_indices_x)
+  #nonzero_y_indices = np.where(nonbackground_indices_y)
 
   width = int(data['size']['width'])
   height = int(data['size']['height'])
@@ -137,16 +137,16 @@ def dict_to_tf_example(data,
       continue
     difficult_obj.append(int(difficult))
 
-    if faces_only:
-      xmin = float(obj['bndbox']['xmin'])
-      xmax = float(obj['bndbox']['xmax'])
-      ymin = float(obj['bndbox']['ymin'])
-      ymax = float(obj['bndbox']['ymax'])
-    else:
-      xmin = float(np.min(nonzero_x_indices))
-      xmax = float(np.max(nonzero_x_indices))
-      ymin = float(np.min(nonzero_y_indices))
-      ymax = float(np.max(nonzero_y_indices))
+    #if faces_only:
+    xmin = float(obj['bndbox']['xmin'])
+    xmax = float(obj['bndbox']['xmax'])
+    ymin = float(obj['bndbox']['ymin'])
+    ymax = float(obj['bndbox']['ymax'])
+    #else:
+    #  xmin = float(np.min(nonzero_x_indices))
+    #  xmax = float(np.max(nonzero_x_indices))
+    #  ymin = float(np.min(nonzero_y_indices))
+    #  ymax = float(np.max(nonzero_y_indices))
 
     xmins.append(xmin / width)
     ymins.append(ymin / height)
@@ -157,11 +157,11 @@ def dict_to_tf_example(data,
     classes.append(label_map_dict[class_name])
     truncated.append(int(obj['truncated']))
     poses.append(obj['pose'].encode('utf8'))
-    if not faces_only:
-      mask_remapped = mask_np != 2
-      masks.append(mask_remapped)
-    mask_stack = np.stack(masks).astype(np.float32)
-    masks_flattened = np.reshape(mask_stack, [-1])
+    #if not faces_only:
+    #  mask_remapped = mask_np != 2
+    #  masks.append(mask_remapped)
+    #mask_stack = np.stack(masks).astype(np.float32)
+    #masks_flattened = np.reshape(mask_stack, [-1])
 
   feature_dict = {
       'image/height': dataset_util.int64_feature(height),
@@ -183,9 +183,9 @@ def dict_to_tf_example(data,
       'image/object/truncated': dataset_util.int64_list_feature(truncated),
       'image/object/view': dataset_util.bytes_list_feature(poses),
   }
-  if not faces_only:
-    feature_dict['image/object/mask'] = (
-        dataset_util.float_list_feature(masks_flattened.tolist()))
+  #if not faces_only:
+  #  feature_dict['image/object/mask'] = (
+  #      dataset_util.float_list_feature(masks_flattened.tolist()))
   example = tf.train.Example(features=tf.train.Features(feature=feature_dict))
   return example
 

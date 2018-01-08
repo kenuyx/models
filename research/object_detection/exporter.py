@@ -418,6 +418,7 @@ def export_inference_graph(input_type,
     additional_output_tensor_names: list of additional output
     tensors to include in the frozen graph.
   """
+  os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
   detection_model = model_builder.build(pipeline_config.model,
                                         is_training=False)
   _export_inference_graph(input_type, detection_model,
